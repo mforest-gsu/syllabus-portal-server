@@ -1,0 +1,16 @@
+security:
+  firewalls:
+    auth:
+      pattern: ^/auth/
+      stateless: true
+      security: false
+
+    main:
+      lazy: true
+      stateless: true
+      access_token:
+        token_handler: Gsu\SyllabusPortal\Security\AccessTokenHandler
+
+  access_control:
+    - { path: ^/auth/, roles: PUBLIC_ACCESS }
+    - { path: ^/, roles: IS_AUTHENTICATED_FULLY }

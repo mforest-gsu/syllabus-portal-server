@@ -1,0 +1,13 @@
+services:
+  Psr\Http\Message\RequestFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Message\ResponseFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Message\ServerRequestFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Message\StreamFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Message\UploadedFileFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Message\UriFactoryInterface: "@guzzlehttp.psr17_factory"
+  Psr\Http\Client\ClientInterface: "@guzzlehttp.psr18_client"
+
+  guzzlehttp.psr17_factory:
+    class: GuzzleHttp\Psr7\HttpFactory
+  guzzlehttp.psr18_client:
+    class: GuzzleHttp\Client

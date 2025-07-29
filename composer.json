@@ -1,0 +1,110 @@
+{
+  "name": "mforest-gsu/syllabus-portal-server",
+  "type": "project",
+  "homepage": "https://github.com/mforest-gsu/syllabus-portal-server",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Melody Kimball",
+      "role": "lead"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/mforest-gsu/syllabus-portal-server/issues",
+    "wiki": "https://github.com/mforest-gsu/syllabus-portal-server/wiki",
+    "source": "https://github.com/mforest-gsu/syllabus-portal-server"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=8.1",
+    "ext-ctype": "*",
+    "ext-iconv": "*",
+    "aws/aws-sdk-php": "^3.347",
+    "doctrine/dbal": "^3",
+    "doctrine/doctrine-bundle": "^2.15",
+    "doctrine/doctrine-migrations-bundle": "^3.4",
+    "doctrine/orm": "^3.4",
+    "firebase/php-jwt": "^6.11",
+    "guzzlehttp/guzzle": "^7.9",
+    "nelmio/cors-bundle": "^2.5",
+    "paragonie/sodium_compat": "^2.1",
+    "phpdocumentor/reflection-docblock": "^5.6",
+    "phpstan/phpdoc-parser": "^2.1",
+    "symfony/console": "6.4.*",
+    "symfony/dotenv": "6.4.*",
+    "symfony/flex": "^2",
+    "symfony/framework-bundle": "6.4.*",
+    "symfony/property-access": "6.4.*",
+    "symfony/property-info": "6.4.*",
+    "symfony/runtime": "6.4.*",
+    "symfony/security-bundle": "6.4.*",
+    "symfony/serializer": "6.4.*",
+    "symfony/uid": "6.4.*",
+    "symfony/yaml": "6.4.*"
+  },
+  "require-dev": {
+    "phpstan/extension-installer": "^1.4",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/phpstan-strict-rules": "^2.0",
+    "squizlabs/php_codesniffer": "^3.11",
+    "symfony/maker-bundle": "^1.63"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true,
+      "phpstan/extension-installer": true,
+      "symfony/flex": true,
+      "symfony/runtime": true
+    },
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "apcu-autoloader": true
+  },
+  "autoload": {
+    "psr-4": {
+      "Gsu\\SyllabusPortal\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Gsu\\SyllabusPortal\\Tests\\": "tests/"
+    }
+  },
+  "replace": {
+    "symfony/polyfill-ctype": "*",
+    "symfony/polyfill-iconv": "*",
+    "symfony/polyfill-php72": "*",
+    "symfony/polyfill-php73": "*",
+    "symfony/polyfill-php74": "*",
+    "symfony/polyfill-php80": "*",
+    "symfony/polyfill-php81": "*"
+  },
+  "scripts": {
+    "auto-scripts": {
+      "cache:clear": "symfony-cmd",
+      "assets:install %PUBLIC_DIR%": "symfony-cmd"
+    },
+    "post-install-cmd": [
+      "@auto-scripts"
+    ],
+    "post-update-cmd": [
+      "@auto-scripts"
+    ],
+    "phpcs": "vendor/bin/phpcs",
+    "phpstan": "vendor/bin/phpstan analyse -c phpstan.neon",
+    "start": [
+      "Composer\\Config::disableProcessTimeout",
+      "@php -S localhost:8080 -t public"
+    ]
+  },
+  "conflict": {
+    "symfony/symfony": "*"
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": false,
+      "require": "6.4.*"
+    }
+  }
+}

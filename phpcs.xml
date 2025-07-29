@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Code standards">
+    <description>Code standards</description>
+
+    <arg value="p"/>
+    <arg name="colors"/>
+    <rule ref="PSR12"/>
+
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <file>bin/</file>
+    <file>config/</file>
+    <file>public/</file>
+    <file>src/</file>
+    <exclude-pattern>vendor/*</exclude-pattern>
+</ruleset>

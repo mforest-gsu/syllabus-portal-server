@@ -1,0 +1,8 @@
+services:
+  Firebase\JWT\CachedKeySet:
+    autowire: true
+    arguments:
+      $jwksUri: "%oidc.jwksUri%"
+      $expiresAfter: 300
+      $rateLimit: true
+      $defaultAlg: "RS256"

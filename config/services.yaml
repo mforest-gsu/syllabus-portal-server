@@ -1,0 +1,44 @@
+parameters:
+  app.secret: "%env(string:resolve:APP_SECRET)%"
+  app.webUri: "%env(string:resolve:WEB_URI)%"
+  aws.accessKeyId: "%env(string:resolve:AWS_ACCESS_KEY_ID)%"
+  aws.secretAccessKey: "%env(string:resolve:AWS_SECRET_ACCESS_KEY)%"
+  doctrine.databaseUrl: "%env(string:resolve:DOCTRINE_DATABASE_URL)%"
+  oidc.tenantId: "%env(string:resolve:OIDC_TENANT_ID)%"
+  oidc.clientId: "%env(string:resolve:OIDC_CLIENT_ID)%"
+  oidc.uriPrefix: "https://login.microsoftonline.com/%oidc.tenantId%"
+  oidc.authUri: "%oidc.uriPrefix%/oauth2/v2.0/authorize"
+  oidc.tokenUri: "%oidc.uriPrefix%/oauth2/v2.0/token"
+  oidc.jwksUri: "%oidc.uriPrefix%/discovery/v2.0/keys"
+  oracle.url: "%env(string:resolve:ORACLE_URL)%"
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Gsu\SyllabusPortal\:
+    resource: "../src/"
+    exclude:
+      - "../src/DependencyInjection/"
+      - "../src/Entity/"
+      - "../src/Kernel.php"
+
+  Gsu\SyllabusPortal\Security\AuthStateFactory:
+    autowire: true
+    arguments:
+      $webUri: "%app.webUri%"
+      $authUri: "%oidc.authUri%"
+      $clientId: "%oidc.clientId%"
+      $appSecret: "%app.secret%"
+
+  Gsu\SyllabusPortal\Security\UserFactory:
+    autowire: true
+    arguments:
+      $tenantId: "%oidc.tenantId%"
+      $clientId: "%oidc.clientId%"
+
+  Gsu\SyllabusPortal\ThirdParty\Oracle\OracleGateway:
+    autowire: true
+    arguments:
+      $oracleUrl: "%oracle.url%"

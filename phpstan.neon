@@ -1,0 +1,8 @@
+parameters:
+    tmpDir: vendor/tmp/phpstan
+    level: 10
+    paths:
+        - bin
+        - config
+        - public
+        - src

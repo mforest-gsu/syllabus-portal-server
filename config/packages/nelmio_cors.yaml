@@ -1,0 +1,14 @@
+nelmio_cors:
+  defaults:
+    allow_credentials: true
+    origin_regex: true
+    allow_origin: [
+        "https://learningtools.gsu.edu",
+        '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+    ]
+    allow_methods: ["GET", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"]
+    allow_headers: ["Content-Type", "Authorization"]
+    expose_headers: ["Link"]
+    max_age: 3600
+  paths:
+    "^/": null
