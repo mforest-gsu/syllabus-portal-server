@@ -111,10 +111,6 @@ class SyllabusRepository
 
     public function removeSyllabusMetadata(CourseSection $courseSection): void
     {
-        if ($courseSection->hasInstructor()) {
-            throw new \RuntimeException();
-        }
-
         $this->removeObject($this->getObjectKey($courseSection, 'json'));
     }
 
