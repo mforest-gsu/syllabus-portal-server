@@ -19,42 +19,39 @@ class BannerRepository
 
 
     /**
-     * @return string
-     */
-    public function getCurrentTerm(): string
-    {
-        return "202605";
-    }
-
-
-    /**
-     * @return string
-     */
-    public function getNextTerm(): string
-    {
-        return "202605";
-    }
-
-
-    /**
-     * @return iterable<int,string>
-     */
-    public function getFutureTerms(): iterable
-    {
-        yield 0 => "202605";
-    }
-
-
-    /**
      * @param string $termCode
      * @return iterable<int,CourseSection>
      */
     public function getCourseSections(string $termCode): iterable
     {
-        return $this->dbGateway->fetch(
+        if ($termCode !== "202508") {
+            return $this->dbGateway->fetch(
+                new OracleQuery(__DIR__ . '/SQL/SSBSECT.sql'),
+                CourseSection::class,
+                [':termCode' => $termCode]
+            );
+        }
+
+        $crns = [];
+        $syllabusVerifications = $this->dbGateway->fetch(
+            new OracleQuery(__DIR__ . '/SQL/GSU_SYLLABUS_VERIFICATION.sql'),
+            CourseSection::class,
+            [':termCode' => $termCode]
+        );
+        foreach ($syllabusVerifications as $syllabusVerification) {
+            $crns[$syllabusVerification->crn] = $syllabusVerification->crn;
+        }
+
+        $courseSections = $this->dbGateway->fetch(
             new OracleQuery(__DIR__ . '/SQL/SSBSECT.sql'),
             CourseSection::class,
             [':termCode' => $termCode]
         );
+
+        foreach ($courseSections as $i => $courseSection) {
+            if (isset($crns[$courseSection->crn]) || $courseSection->collegeCode === "EH") {
+                yield $i => $courseSection;
+            }
+        }
     }
 }

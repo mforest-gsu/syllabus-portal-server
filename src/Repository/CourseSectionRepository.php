@@ -205,16 +205,20 @@ final class CourseSectionRepository extends ServiceEntityRepository
             ->setParameters($params)
             ->getResult();
 
-        $deleted = 0;
+        $deletedTotal = $deleted = 0;
         foreach ($data as $courseSection) {
             if ($courseSection->hasSyllabus()) {
-                $this->syllabusRepo->removeSyllabus($courseSection);
-            } elseif (!$courseSection->hasInstructor()) {
-                $this->syllabusRepo->removeSyllabusMetadata($courseSection);
+                //$this->syllabusRepo->removeSyllabus($courseSection);
+                $courseSection->active = true;
+            } else {
+                if (!$courseSection->hasInstructor()) {
+                    $this->syllabusRepo->removeSyllabusMetadata($courseSection);
+                }
+                $this->getEntityManager()->remove($courseSection);
+                $deleted++;
             }
 
-            $this->getEntityManager()->remove($courseSection);
-            if (++$deleted % 250 === 0) {
+            if (++$deletedTotal % 250 === 0) {
                 $this->getEntityManager()->flush();
             }
         }
