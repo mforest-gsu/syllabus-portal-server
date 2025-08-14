@@ -118,25 +118,13 @@ final class CourseSectionRepository extends ServiceEntityRepository
             /** @var CourseSection|null $currentSection */
             $currentSection = $this->find($newSection->id);
             if ($currentSection === null) {
-                if (!$newSection->hasInstructor()) {
-                    $this->syllabusRepo->addSyllabusMetadata($newSection);
-                }
+                $this->syllabusRepo->addSyllabusMetadata($newSection);
                 $em->persist($newSection);
                 $created++;
             } else {
-                $usedToHaveInstructor = $currentSection->hasInstructor();
-                $nowHasInstuctor = $newSection->hasInstructor();
-
                 $currentSection->active = true;
                 if ($currentSection->setValues($newSection)) {
-                    if (!$usedToHaveInstructor && $nowHasInstuctor) {
-                        $this->syllabusRepo->removeSyllabusMetadata($currentSection);
-                    } elseif (!$nowHasInstuctor) {
-                        if ($usedToHaveInstructor && $currentSection->hasSyllabus()) {
-                            $this->syllabusRepo->removeSyllabus($currentSection);
-                        }
-                        $this->syllabusRepo->addSyllabusMetadata($currentSection);
-                    }
+                    $this->syllabusRepo->addSyllabusMetadata($currentSection);
                     $updated++;
                 }
             }
@@ -211,9 +199,7 @@ final class CourseSectionRepository extends ServiceEntityRepository
                 //$this->syllabusRepo->removeSyllabus($courseSection);
                 $courseSection->active = true;
             } else {
-                if (!$courseSection->hasInstructor()) {
-                    $this->syllabusRepo->removeSyllabusMetadata($courseSection);
-                }
+                $this->syllabusRepo->removeSyllabusMetadata($courseSection);
                 $this->getEntityManager()->remove($courseSection);
                 $deleted++;
             }

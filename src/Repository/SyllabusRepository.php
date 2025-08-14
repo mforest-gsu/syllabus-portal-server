@@ -43,10 +43,6 @@ class SyllabusRepository
         User $user,
         string $filePath
     ): void {
-        if (!$courseSection->hasInstructor()) {
-            throw new \RuntimeException();
-        }
-
         $fileExt = match (mime_content_type($filePath)) {
             "application/pdf" => "pdf",
             default => throw new \RuntimeException()
@@ -94,12 +90,10 @@ class SyllabusRepository
 
     public function removeSyllabus(CourseSection $courseSection): void
     {
-        if (!$courseSection->hasSyllabus()) {
-            throw new \RuntimeException();
+        if ($courseSection->hasSyllabus()) {
+            $this->removeObject($this->getObjectKey($courseSection, 'json'));
+            $this->removeObject($this->getObjectKey($courseSection));
         }
-
-        $this->removeObject($this->getObjectKey($courseSection, 'json'));
-        $this->removeObject($this->getObjectKey($courseSection));
 
         $courseSection->syllabusStatus = "Pending";
         $courseSection->syllabusKey = null;

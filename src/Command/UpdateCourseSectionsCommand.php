@@ -75,6 +75,6 @@ class UpdateCourseSectionsCommand extends Command
         $termCode = $input->getArgument('term_code');
         return is_numeric($termCode)
                 ? strval(intval($termCode))
-                : throw new \RuntimeException();
+                : throw new \RuntimeException("Invalid term_code");
     }
 }
