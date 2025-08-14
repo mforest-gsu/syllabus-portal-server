@@ -6,6 +6,8 @@ namespace Gsu\SyllabusPortal\Command;
 
 use Gsu\SyllabusPortal\Repository\BannerRepository;
 use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,8 +15,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand('app:update-course-sections')]
-class UpdateCourseSectionsCommand extends Command
+class UpdateCourseSectionsCommand extends Command implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
+
     public function __construct(
         private CourseSectionRepository $courseSectionRepo,
         private BannerRepository $bannerRepo,
@@ -36,14 +41,14 @@ class UpdateCourseSectionsCommand extends Command
     ): int {
         // Determine what term to process
         $termCode = $this->getTermCode($input);
-        $output->writeln(sprintf(
+        $this->logger?->info(sprintf(
             "Updating course sections for term '%s'",
             $termCode
         ));
 
         // Fetch new course sections from Banner
         $newSections = $this->bannerRepo->getCourseSections($termCode);
-        $output->writeln(sprintf(
+        $this->logger?->info(sprintf(
             "Fetched course sections for term '%s'",
             $termCode
         ));
@@ -53,7 +58,7 @@ class UpdateCourseSectionsCommand extends Command
             $termCode,
             $newSections
         );
-        $output->writeln(sprintf(
+        $this->logger?->info(sprintf(
             "Term: %s; Created: %s; Updated: %s; Deleted: %s; Total: %s",
             $termCode,
             $result['created'],

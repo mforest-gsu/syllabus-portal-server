@@ -11,6 +11,8 @@ use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
 use Gsu\SyllabusPortal\Repository\SyllabusRepository;
 use Gsu\SyllabusPortal\ThirdParty\Oracle\OracleGateway;
 use Gsu\SyllabusPortal\ThirdParty\Oracle\OracleQuery;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -18,8 +20,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand('app:batch-upload')]
-class BatchUploadCourseSectionsCommand extends Command
+class BatchUploadCourseSectionsCommand extends Command implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private CourseSectionRepository $courseSectionRepo,
@@ -145,11 +150,11 @@ class BatchUploadCourseSectionsCommand extends Command
             }
         }
 
-        echo sprintf(
+        $this->logger?->info(sprintf(
             "Created: %s; Updated: %s; Total: %s",
             $created,
             $updated,
             $total
-        );
+        ));
     }
 }
