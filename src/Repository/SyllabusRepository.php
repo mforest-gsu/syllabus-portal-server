@@ -77,10 +77,6 @@ class SyllabusRepository
 
     public function addSyllabusMetadata(CourseSection $courseSection): void
     {
-        if ($courseSection->hasInstructor()) {
-            throw new \RuntimeException();
-        }
-
         $this->addObject(
             $this->getObjectKey($courseSection, 'json'),
             $this->serializer->serialize($courseSection, 'json')

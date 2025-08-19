@@ -150,6 +150,8 @@ class BatchUploadCourseSectionsCommand extends Command implements LoggerAwareInt
             }
         }
 
+        $this->entityManager->flush();
+
         $this->logger?->info(sprintf(
             "Created: %s; Updated: %s; Total: %s",
             $created,
