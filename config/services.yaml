@@ -3,6 +3,8 @@ parameters:
   app.webUri: "%env(string:resolve:WEB_URI)%"
   aws.accessKeyId: "%env(string:resolve:AWS_ACCESS_KEY_ID)%"
   aws.secretAccessKey: "%env(string:resolve:AWS_SECRET_ACCESS_KEY)%"
+  aws.bucket: "%env(string:resolve:AWS_BUCKET)%"
+  aws.keyPrefix: "%env(string:resolve:AWS_KEY_PREFIX)%"
   doctrine.databaseUrl: "%env(string:resolve:DOCTRINE_DATABASE_URL)%"
   oidc.tenantId: "%env(string:resolve:OIDC_TENANT_ID)%"
   oidc.clientId: "%env(string:resolve:OIDC_CLIENT_ID)%"
@@ -23,6 +25,12 @@ services:
       - "../src/DependencyInjection/"
       - "../src/Entity/"
       - "../src/Kernel.php"
+
+  Gsu\SyllabusPortal\Repository\SyllabusRepository:
+    autowire: true
+    arguments:
+      $bucket: "%aws.bucket%"
+      $prefix: "%aws.keyPrefix%"
 
   Gsu\SyllabusPortal\Security\AuthStateFactory:
     autowire: true

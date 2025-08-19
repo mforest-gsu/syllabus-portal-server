@@ -14,8 +14,8 @@ class SyllabusRepository
     public function __construct(
         private S3Client $s3Client,
         private SerializerInterface $serializer,
-        private string $bucket = 'shared-data-qa',
-        private string $prefix = 'cetl'
+        private string $bucket,
+        private string $prefix
     ) {
     }
 
