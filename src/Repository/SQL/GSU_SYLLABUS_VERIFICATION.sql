@@ -1,16 +1,16 @@
 select distinct
-  CourseOffering.SisTermCode as "termCode",
-  CourseOffering.SisCrn as "crn"
+  CourseSection.SisTermCode as "termCode",
+  CourseSection.SisCrn as "crn"
 from
   d2l_organizational_unit_ancestor OrgUnitAncestor,
-  d2l_organizational_unit CourseOffering
+  d2l_organizational_unit CourseSection
 where
   OrgUnitAncestor.AncestorOrgUnitType = 'College' and
   OrgUnitAncestor.AncestorOrgUnitCode = 'COL.090.CORE' and
   OrgUnitAncestor.OrgUnitType = 'Section' AND
-  CourseOffering.OrgUnitId = OrgUnitAncestor.OrgUnitId AND
-  CourseOffering.SisTermCode = :termCode AND
-  CourseOffering.SisCrn is not null and
+  CourseSection.OrgUnitId = OrgUnitAncestor.OrgUnitId AND
+  CourseSection.SisTermCode = :termCode AND
+  CourseSection.SisCrn is not null and
   -- exception list for Fall 2025
   CourseSection.SisCrn not in (
      '93492'  -- CONDUCTING-GRADUATE III|APCD 8003|Graduate course, remove from list
