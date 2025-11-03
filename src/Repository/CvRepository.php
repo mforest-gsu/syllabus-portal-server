@@ -7,13 +7,11 @@ namespace Gsu\SyllabusPortal\Repository;
 use Aws\S3\S3Client;
 use Gsu\SyllabusPortal\Entity\CourseSection;
 use Gsu\SyllabusPortal\Entity\User;
-use Symfony\Component\Serializer\SerializerInterface;
 
-class SyllabusRepository
+class CvRepository
 {
     public function __construct(
         private S3Client $s3Client,
-        private SerializerInterface $serializer,
         private string $bucket,
         private string $prefix
     ) {
@@ -24,7 +22,7 @@ class SyllabusRepository
         CourseSection $courseSection,
         int $expiresIn
     ): string|null {
-        return $courseSection->hasSyllabus()
+        return $courseSection->hasCv()
             ? $this->s3Client->createPresignedRequest(
                 $this->s3Client->getCommand('GetObject', [
                     'Bucket' => $this->bucket,
@@ -38,7 +36,7 @@ class SyllabusRepository
     }
 
 
-    public function addSyllabus(
+    public function addCv(
         CourseSection $courseSection,
         User $user,
         string $filePath
@@ -48,21 +46,21 @@ class SyllabusRepository
             default => throw new \RuntimeException()
         };
 
-        $courseSection->syllabusStatus = "Complete";
-        $courseSection->syllabusKey = $this->getObjectKey($courseSection, $fileExt);
-        $courseSection->syllabusExtension = $fileExt;
-        $courseSection->syllabusUploadedBy = $user->getPreferredUsername();
-        $courseSection->syllabusUploadedOn = new \DateTime();
+        $courseSection->cvStatus = "Complete";
+        $courseSection->cvKey = $this->getObjectKey($courseSection, $fileExt);
+        $courseSection->cvExtension = $fileExt;
+        $courseSection->cvUploadedBy = $user->getPreferredUsername();
+        $courseSection->cvUploadedOn = new \DateTime();
 
         try {
             $f = fopen($filePath, "r");
             if (!is_resource($f)) {
                 throw new \RuntimeException();
             }
-            $this->addObject(
-                $this->getObjectKey($courseSection, 'json'),
-                $this->serializer->serialize($courseSection, 'json')
-            );
+            // $this->addObject(
+            //     $this->getObjectKey($courseSection, 'json'),
+            //     $this->serializer->serialize($courseSection, 'json')
+            // );
             $this->addObject(
                 $this->getObjectKey($courseSection),
                 $f
@@ -75,46 +73,31 @@ class SyllabusRepository
     }
 
 
-    public function addSyllabusMetadata(CourseSection $courseSection): void
+    public function removeCv(CourseSection $courseSection): void
     {
-        $this->addObject(
-            $this->getObjectKey($courseSection, 'json'),
-            $this->serializer->serialize($courseSection, 'json')
-        );
-    }
-
-
-    public function removeSyllabus(CourseSection $courseSection): void
-    {
-        if ($courseSection->hasSyllabus()) {
-            $this->removeObject($this->getObjectKey($courseSection, 'json'));
+        if ($courseSection->hasCv()) {
             $this->removeObject($this->getObjectKey($courseSection));
+            $this->removeObject($this->getObjectKey($courseSection, 'json'));
         }
 
-        $courseSection->syllabusStatus = "Pending";
-        $courseSection->syllabusKey = null;
-        $courseSection->syllabusExtension = null;
-        $courseSection->syllabusUploadedBy = null;
-        $courseSection->syllabusUploadedOn = null;
-    }
-
-
-    public function removeSyllabusMetadata(CourseSection $courseSection): void
-    {
-        $this->removeObject($this->getObjectKey($courseSection, 'json'));
+        $courseSection->cvStatus = "Pending";
+        $courseSection->cvUrl = null;
+        $courseSection->cvKey = null;
+        $courseSection->cvExtension = null;
+        $courseSection->cvUploadedBy = null;
+        $courseSection->cvUploadedOn = null;
     }
 
 
     private function getObjectKey(
         CourseSection $courseSection,
-        string|null $syllabusExtension = null
+        string|null $cvExtension = null
     ): string {
         return sprintf(
-            '%s/%s/%s.%s',
+            '%s/cv/%s.%s',
             $this->prefix,
-            $courseSection->termCode,
-            $courseSection->crn,
-            $syllabusExtension ?? $courseSection->syllabusExtension
+            $courseSection->instructorId,
+            $cvExtension ?? $courseSection->cvExtension
         );
     }
 

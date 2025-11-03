@@ -8,7 +8,6 @@ use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
-use Symfony\Bridge\Doctrine\Types\UuidType;
 
 #[ORM\Entity(CourseSectionRepository::class)]
 #[ORM\UniqueConstraint(
@@ -88,6 +87,8 @@ class CourseSection implements \JsonSerializable, \Stringable
         public string $courseSequence = '',
         #[ORM\Column(type: Types::STRING, length: 30)]
         public string $courseTitle = '',
+        #[ORM\Column(type: Types::STRING, length: 3)]
+        public string $scheduleCode = '',
         #[ORM\Column(type: Types::STRING, length: 8)]
         public string $instructorPidm = '00000000',
         #[ORM\Column(type: Types::STRING, length: 9)]
@@ -98,7 +99,7 @@ class CourseSection implements \JsonSerializable, \Stringable
         public string|null $instructorLastName = 'Instructor',
         #[ORM\Column(type: Types::STRING, length: 128, nullable: true)]
         public string|null $instructorEmail = null,
-        #[ORM\Column(type: Types::STRING, length: 10)]
+        #[ORM\Column(type: Types::STRING, length: 12)]
         public string $syllabusStatus = 'Pending',
         public string|null $syllabusUrl = null,
         #[ORM\Column(type: Types::STRING, length: 128, nullable: true)]
@@ -109,6 +110,19 @@ class CourseSection implements \JsonSerializable, \Stringable
         public \DateTime|null $syllabusUploadedOn = null,
         #[ORM\Column(type: Types::STRING, length: 128, nullable: true)]
         public string|null $syllabusUploadedBy = null,
+        #[ORM\Column(type: Types::BOOLEAN)]
+        public bool $syllabusIsRequired = false,
+        #[ORM\Column(type: Types::STRING, length: 10)]
+        public string $cvStatus = 'Pending',
+        public string|null $cvUrl = null,
+        #[ORM\Column(type: Types::STRING, length: 128, nullable: true)]
+        public string|null $cvKey = null,
+        #[ORM\Column(type: Types::STRING, length: 16, nullable: true)]
+        public string|null $cvExtension = null,
+        #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+        public \DateTime|null $cvUploadedOn = null,
+        #[ORM\Column(type: Types::STRING, length: 128, nullable: true)]
+        public string|null $cvUploadedBy = null,
         #[ORM\Column(type: Types::BOOLEAN)]
         public bool $active = true
     ) {
@@ -144,17 +158,9 @@ class CourseSection implements \JsonSerializable, \Stringable
         return $this->hasInstructor() && $this->syllabusStatus === 'Complete' && $this->syllabusExtension !== null;
     }
 
-    public function getObjectKey(
-        string $prefix,
-        string|null $syllabusExtension = null
-    ): string {
-        return sprintf(
-            '%s/%s/%s.%s',
-            $prefix,
-            $this->termCode,
-            $this->crn,
-            $syllabusExtension ?? $this->syllabusExtension
-        );
+    public function hasCv(): bool
+    {
+        return $this->hasInstructor() && $this->cvStatus === 'Complete' && $this->cvExtension !== null;
     }
 
     /**
@@ -184,11 +190,13 @@ class CourseSection implements \JsonSerializable, \Stringable
         $this->courseNumber = $source->courseNumber;
         $this->courseSequence = $source->courseSequence;
         $this->courseTitle = $source->courseTitle;
+        $this->scheduleCode = $source->scheduleCode;
         $this->instructorPidm = $source->instructorPidm;
         $this->instructorId = $source->instructorId;
         $this->instructorFirstName = $source->instructorFirstName;
         $this->instructorLastName = $source->instructorLastName;
         $this->instructorEmail = $source->instructorEmail;
+        $this->syllabusIsRequired = $source->syllabusIsRequired;
 
         if ($everything) {
             $this->id = $source->id;
@@ -198,6 +206,12 @@ class CourseSection implements \JsonSerializable, \Stringable
             $this->syllabusExtension = $source->syllabusExtension;
             $this->syllabusUploadedBy = $source->syllabusUploadedBy;
             $this->syllabusUploadedOn = $source->syllabusUploadedOn;
+            $this->cvStatus = $source->cvStatus;
+            $this->cvKey = $source->cvKey;
+            $this->cvUrl = $source->cvUrl;
+            $this->cvExtension = $source->cvExtension;
+            $this->cvUploadedBy = $source->cvUploadedBy;
+            $this->cvUploadedOn = $source->cvUploadedOn;
             $this->active = $source->active;
         }
 
@@ -216,9 +230,10 @@ class CourseSection implements \JsonSerializable, \Stringable
             : array_filter(
                 get_object_vars($this),
                 fn(string $k): bool => (
-                    $k !== 'id' &&
-                    $k !== 'active' &&
-                    !str_starts_with($k, 'syllabus')
+                    $k !== 'id'
+                    && $k !== 'active'
+                    && ($k === 'syllabusIsRequired' || !str_starts_with($k, 'syllabus'))
+                    && !str_starts_with($k, 'cv')
                 ),
                 ARRAY_FILTER_USE_KEY
             );

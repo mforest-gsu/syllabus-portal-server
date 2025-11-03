@@ -26,6 +26,12 @@ services:
       - "../src/Entity/"
       - "../src/Kernel.php"
 
+  Gsu\SyllabusPortal\Repository\CvRepository:
+    autowire: true
+    arguments:
+      $bucket: "%aws.bucket%"
+      $prefix: "%aws.keyPrefix%"
+  
   Gsu\SyllabusPortal\Repository\SyllabusRepository:
     autowire: true
     arguments:

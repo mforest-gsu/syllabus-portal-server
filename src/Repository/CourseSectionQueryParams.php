@@ -19,10 +19,15 @@ final class CourseSectionQueryParams
         string|null $instructorFirstName = null,
         string|null $instructorLastName = null,
         string|null $instructorEmail = null,
+        string|null $syllabusIsRequired = null,
         string|null $syllabusStatus = null,
         string|null $syllabusUploadedBy = null,
         string|null $syllabusUploadedOnStart = null,
         string|null $syllabusUploadedOnEnd = null,
+        string|null $cvStatus = null,
+        string|null $cvUploadedBy = null,
+        string|null $cvUploadedOnStart = null,
+        string|null $cvUploadedOnEnd = null,
         int $offset = 0,
         int $limit = 25,
         string|null $orderBy = null
@@ -40,10 +45,15 @@ final class CourseSectionQueryParams
             ->setInstructorFirstName($instructorFirstName)
             ->setInstructorLastName($instructorLastName)
             ->setInstructorEmail($instructorEmail)
+            ->setSyllabusIsRequired($syllabusIsRequired)
             ->setSyllabusStatus($syllabusStatus)
             ->setSyllabusUploadedBy($syllabusUploadedBy)
             ->setSyllabusUploadedOnStart($syllabusUploadedOnStart)
             ->setSyllabusUploadedOnEnd($syllabusUploadedOnEnd)
+            ->setCvStatus($cvStatus)
+            ->setCvUploadedBy($cvUploadedBy)
+            ->setCvUploadedOnStart($cvUploadedOnStart)
+            ->setCvUploadedOnEnd($cvUploadedOnEnd)
             ->setOffset($offset)
             ->setLimit($limit)
             ->setOrderBy($orderBy);
@@ -193,6 +203,19 @@ final class CourseSectionQueryParams
         return $this;
     }
 
+
+    private string|null $syllabusIsRequired = null;
+    public function getSyllabusIsRequired(): string|null
+    {
+        return $this->syllabusIsRequired;
+    }
+    public function setSyllabusIsRequired(string|null $syllabusIsRequired): static
+    {
+        $this->syllabusIsRequired = $syllabusIsRequired;
+        return $this;
+    }
+
+
     private string|null $syllabusStatus = null;
     public function getSyllabusStatus(): string|null
     {
@@ -237,6 +260,54 @@ final class CourseSectionQueryParams
     public function setSyllabusUploadedOnEnd(string|null $syllabusUploadedOnEnd): static
     {
         $this->syllabusUploadedOnEnd = $syllabusUploadedOnEnd;
+        return $this;
+    }
+
+
+    private string|null $cvStatus = null;
+    public function getCvStatus(): string|null
+    {
+        return $this->cvStatus;
+    }
+    public function setCvStatus(string|null $cvStatus): static
+    {
+        $this->cvStatus = $cvStatus;
+        return $this;
+    }
+
+
+    private string|null $cvUploadedBy = null;
+    public function getCvUploadedBy(): string|null
+    {
+        return $this->cvUploadedBy;
+    }
+    public function setCvUploadedBy(string|null $cvUploadedBy): static
+    {
+        $this->cvUploadedBy = $cvUploadedBy;
+        return $this;
+    }
+
+
+    private string|null $cvUploadedOnStart = null;
+    public function getCvUploadedOnStart(): string|null
+    {
+        return $this->cvUploadedOnStart;
+    }
+    public function setCvUploadedOnStart(string|null $cvUploadedOnStart): static
+    {
+        $this->cvUploadedOnStart = $cvUploadedOnStart;
+        return $this;
+    }
+
+
+    private string|null $cvUploadedOnEnd = null;
+    public function getCvUploadedOnEnd(): string|null
+    {
+        return $this->cvUploadedOnEnd;
+    }
+    public function setCvUploadedOnEnd(string|null $cvUploadedOnEnd): static
+    {
+        $this->cvUploadedOnEnd = $cvUploadedOnEnd;
         return $this;
     }
 

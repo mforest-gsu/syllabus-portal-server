@@ -31,7 +31,7 @@ class UpdateCourseSectionsCommand extends Command implements LoggerAwareInterfac
 
     protected function configure(): void
     {
-        $this->addArgument('term_code', InputArgument::REQUIRED);
+        $this->addArgument('term_code', InputArgument::OPTIONAL);
     }
 
 
@@ -39,33 +39,31 @@ class UpdateCourseSectionsCommand extends Command implements LoggerAwareInterfac
         InputInterface $input,
         OutputInterface $output
     ): int {
-        // Determine what term to process
-        $termCode = $this->getTermCode($input);
-        $this->logger?->info(sprintf(
-            "Updating course sections for term '%s'",
-            $termCode
-        ));
+        $this->courseSectionRepo->setAllInactive();
 
-        // Fetch new course sections from Banner
-        $newSections = $this->bannerRepo->getCourseSections($termCode);
-        $this->logger?->info(sprintf(
-            "Fetched course sections for term '%s'",
-            $termCode
-        ));
+        // Run for each available term
+        foreach ($this->getAvailableTerms($input) as $termCode) {
+            // Fetch new course sections from Banner
+            $newSections = $this->bannerRepo->getCourseSections($termCode);
+            $this->logger?->info(sprintf(
+                "Fetched course sections for term '%s'",
+                $termCode
+            ));
 
-        // Update local course sections
-        $result = $this->courseSectionRepo->update(
-            $termCode,
-            $newSections
-        );
-        $this->logger?->info(sprintf(
-            "Term: %s; Created: %s; Updated: %s; Deleted: %s; Total: %s",
-            $termCode,
-            $result['created'],
-            $result['updated'],
-            $result['deleted'],
-            $result['total']
-        ));
+            // Update local course sections
+            $result = $this->courseSectionRepo->update(
+                $termCode,
+                $newSections
+            );
+            $this->logger?->info(sprintf(
+                "Updated course sections for term '%s'; +%s, ~%s, -%s; %s",
+                $termCode,
+                $result['created'],
+                $result['updated'],
+                $result['deleted'],
+                $result['total']
+            ));
+        }
 
         return self::SUCCESS;
     }
@@ -73,13 +71,17 @@ class UpdateCourseSectionsCommand extends Command implements LoggerAwareInterfac
 
     /**
      * @param InputInterface $input
-     * @return string
+     * @return iterable<int,string>
      */
-    private function getTermCode(InputInterface $input): string
+    private function getAvailableTerms(InputInterface $input): iterable
     {
         $termCode = $input->getArgument('term_code');
-        return is_numeric($termCode)
-                ? strval(intval($termCode))
-                : throw new \RuntimeException("Invalid term_code");
+        if (is_numeric($termCode)) {
+            yield 0 => strval($termCode);
+        } else {
+            foreach ($this->bannerRepo->getCurrentTerms() as $i => $term) {
+                yield $i => $term->termCode;
+            }
+        }
     }
 }

@@ -39,9 +39,12 @@ class FiltersController extends AbstractController
                         CourseSection.termName label
                     FROM
                         {$this->entityName} CourseSection
+                    WHERE
+                        CourseSection.active = :active
                     ORDER BY
                         CourseSection.termCode desc
                 ")
+                ->setParameter(':active', true)
                 ->getArrayResult()
         ]);
     }

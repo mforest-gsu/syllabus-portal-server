@@ -18,6 +18,7 @@ final class CourseSectionRepository extends ServiceEntityRepository
     public function __construct(
         ManagerRegistry $registry,
         private SyllabusRepository $syllabusRepo,
+        private CvRepository $cvRepo,
         private Security $security
     ) {
         parent::__construct($registry, CourseSection::class);
@@ -55,6 +56,11 @@ final class CourseSectionRepository extends ServiceEntityRepository
                 $courseSection,
                 $this->getExpiresIn()
             );
+
+            $courseSection->cvUrl = $this->cvRepo->getDownloadUrl(
+                $courseSection,
+                $this->getExpiresIn()
+            );
         }
 
         return $courseSection;
@@ -84,6 +90,13 @@ final class CourseSectionRepository extends ServiceEntityRepository
         foreach ($data as $courseSection) {
             $courseSection->syllabusUrl = $courseSection->hasSyllabus()
                 ? $this->syllabusRepo->getDownloadUrl(
+                    $courseSection,
+                    $this->getExpiresIn()
+                )
+                : null;
+
+            $courseSection->cvUrl = $courseSection->hasCv()
+                ? $this->cvRepo->getDownloadUrl(
                     $courseSection,
                     $this->getExpiresIn()
                 )
@@ -147,6 +160,57 @@ final class CourseSectionRepository extends ServiceEntityRepository
     }
 
 
+    public function setCv(CourseSection $courseSection): int
+    {
+        $courseSectionClass = CourseSection::class;
+        $updated = $this
+            ->getEntityManager()
+            ->createQuery("
+                UPDATE
+                    {$courseSectionClass} CourseSection
+                SET
+                    CourseSection.cvStatus = :cvStatus,
+                    CourseSection.cvKey = :cvKey,
+                    CourseSection.cvExtension = :cvExtension,
+                    CourseSection.cvUploadedBy = :cvUploadedBy,
+                    CourseSection.cvUploadedOn = :cvUploadedOn
+                WHERE
+                    CourseSection.termCode = :termCode and
+                    CourseSection.instructorId = :instructorId
+            ")
+            ->execute([
+                ':termCode' => $courseSection->termCode,
+                ':instructorId' => $courseSection->instructorId,
+                ':cvStatus' => $courseSection->cvStatus,
+                ':cvKey' => $courseSection->cvKey,
+                ':cvExtension' => $courseSection->cvExtension,
+                ':cvUploadedBy' => $courseSection->cvUploadedBy,
+                ':cvUploadedOn' => $courseSection->cvUploadedOn
+            ]);
+
+        return is_numeric($updated) ? intval($updated) : 0;
+    }
+
+
+    public function setAllInactive(): int
+    {
+        $courseSection = CourseSection::class;
+        $updated = $this
+            ->getEntityManager()
+            ->createQuery("
+                UPDATE
+                    {$courseSection} CourseSection
+                SET
+                    CourseSection.active = :active
+            ")
+            ->execute([
+                ':active' => false
+            ]);
+
+        return is_numeric($updated) ? intval($updated) : 0;
+    }
+
+
     public function setInactive(string $termCode): int
     {
         $courseSection = CourseSection::class;
@@ -197,7 +261,7 @@ final class CourseSectionRepository extends ServiceEntityRepository
         foreach ($data as $courseSection) {
             if ($courseSection->hasSyllabus()) {
                 //$this->syllabusRepo->removeSyllabus($courseSection);
-                $courseSection->active = true;
+                $this->syllabusRepo->addSyllabusMetadata($courseSection);
             } else {
                 $this->syllabusRepo->removeSyllabusMetadata($courseSection);
                 $this->getEntityManager()->remove($courseSection);

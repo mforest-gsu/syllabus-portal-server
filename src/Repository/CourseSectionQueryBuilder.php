@@ -35,16 +35,22 @@ class CourseSectionQueryBuilder
             ":campusCode" => "CourseSection.campusCode = :campusCode",
             ":subjectCode" => "CourseSection.subjectCode LIKE :subjectCode",
             ":courseNumber" => "CourseSection.courseNumber LIKE :courseNumber",
-            ":courseTitle" => "CourseSection.courseTitle name LIKE :courseTitle",
+            ":courseTitle" => "CourseSection.courseTitle LIKE :courseTitle",
             ":crn" => "CourseSection.crn = :crn",
             ":instructorId" => "CourseSection.instructorId = :instructorId",
             ":instructorFirstName" => "CourseSection.instructorFirstName LIKE :instructorFirstName",
             ":instructorLastName" => "CourseSection.instructorLastName LIKE :instructorLastName",
             ":instructorEmail" => "CourseSection.instructorEmail LIKE :instructorEmail",
+            ":syllabusIsRequired" => "CourseSection.syllabusIsRequired = :syllabusIsRequired",
             ":syllabusStatus" => "CourseSection.syllabusStatus = :syllabusStatus",
             ":syllabusUploadedBy" => "CourseSection.syllabusUploadedBy LIKE :syllabusUploadedBy",
             ":syllabusUploadedOnStart" => "CourseSection.syllabusUploadedOn >= :syllabusUploadedOnStart",
-            ":syllabusUploadedOnEnd" => "CourseSection.syllabusUploadedOn <= :syllabusUploadedOnEnd"
+            ":syllabusUploadedOnEnd" => "CourseSection.syllabusUploadedOn <= :syllabusUploadedOnEnd",
+            ":cvStatus" => "CourseSection.cvStatus = :cvStatus",
+            ":cvUploadedBy" => "CourseSection.cvUploadedBy LIKE :cvUploadedBy",
+            ":cvUploadedOnStart" => "CourseSection.cvUploadedOn >= :cvUploadedOnStart",
+            ":cvUploadedOnEnd" => "CourseSection.cvUploadedOn <= :cvUploadedOnEnd",
+            ":active" => "CourseSection.active = :active"
         ];
     }
 
@@ -66,9 +72,14 @@ class CourseSectionQueryBuilder
             $orderBy
         );
 
+        if (isset($params[":syllabusIsRequired"])) {
+            $params[":syllabusIsRequired"] = $params[":syllabusIsRequired"] === "true";
+        }
+
         return $this->em
             ->createQuery($dql)
-            ->setParameters($params);
+            ->setParameters($params)
+            ->setParameter(":active", true);
     }
 
 
@@ -94,9 +105,12 @@ class CourseSectionQueryBuilder
                 "instructorLastName",
                 "instructorEmail",
                 "syllabusUploadedBy" => '%' . $value . '%',
+                "cvUploadedBy" => '%' . $value . '%',
                 default => $value
             };
         }
+
+        $params[":active"] = "true";
 
         return $params;
     }
