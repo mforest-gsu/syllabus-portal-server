@@ -117,7 +117,7 @@ final class CourseSectionRepository extends ServiceEntityRepository
         iterable $newSections
     ): array {
         $em = $this->getEntityManager();
-        $created = $updated = $total = 0;
+        $created = $updated = $saved = $total = 0;
 
         $this->setInactive($termCode);
 
@@ -134,20 +134,26 @@ final class CourseSectionRepository extends ServiceEntityRepository
                 $this->syllabusRepo->addSyllabusMetadata($newSection);
                 $em->persist($newSection);
                 $created++;
+                if (++$saved % 250 === 0) {
+                    $em->flush();
+                }
             } else {
                 $currentSection->active = true;
                 if ($currentSection->setValues($newSection)) {
                     $this->syllabusRepo->addSyllabusMetadata($currentSection);
                     $updated++;
+                    if (++$saved % 250 === 0) {
+                        $em->flush();
+                    }
                 }
             }
 
-            if (++$total % 250 === 0) {
-                $em->flush();
-            }
+            ++$total;
         }
 
         $em->flush();
+
+        $this->updateCV();
 
         $deleted = $this->removeInactive($termCode);
 
@@ -157,6 +163,48 @@ final class CourseSectionRepository extends ServiceEntityRepository
             'deleted' => $deleted,
             'total' => $total
         ];
+    }
+
+
+    public function updateCV(): void
+    {
+        $courseSectionClass = CourseSection::class;
+        $dql = "
+            SELECT
+                a
+            FROM
+                {$courseSectionClass} a
+            WHERE
+                a.id in (
+                    SELECT
+                        max(b.id) as id
+                    FROM
+                        {$courseSectionClass} b
+                    WHERE
+                        b.instructorId = a.instructorId AND
+                        b.cvStatus = 'Complete'
+                    GROUP BY
+                        b.instructorId
+                )
+                and exists(
+                    SELECT
+                        1
+                    FROM
+                        {$courseSectionClass} c
+                    WHERE
+                        c.instructorId = a.instructorId AND
+                        c.cvStatus != 'Complete'
+                )
+        ";
+
+        /** @var CourseSection[] $data */
+        $data = $this->getEntityManager()
+            ->createQuery($dql)
+            ->getResult();
+
+        foreach ($data as $row) {
+            $this->setCv($row);
+        }
     }
 
 
@@ -175,11 +223,9 @@ final class CourseSectionRepository extends ServiceEntityRepository
                     CourseSection.cvUploadedBy = :cvUploadedBy,
                     CourseSection.cvUploadedOn = :cvUploadedOn
                 WHERE
-                    CourseSection.termCode = :termCode and
                     CourseSection.instructorId = :instructorId
             ")
             ->execute([
-                ':termCode' => $courseSection->termCode,
                 ':instructorId' => $courseSection->instructorId,
                 ':cvStatus' => $courseSection->cvStatus,
                 ':cvKey' => $courseSection->cvKey,

@@ -10,15 +10,15 @@ use Doctrine\ORM\Mapping as ORM;
 use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
 
 #[ORM\Entity(CourseSectionRepository::class)]
-#[ORM\UniqueConstraint(
+#[ORM\Index(
     name: 'course_section_term_crn',
     columns: [
         'term_code',
         'crn'
     ]
 )]
-#[ORM\UniqueConstraint(
-    name: 'course_section_term_crn',
+#[ORM\Index(
+    name: 'course_section_subj_crse_seq',
     columns: [
         'term_code',
         'subject_code',
@@ -26,9 +26,16 @@ use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
         'course_sequence',
     ]
 )]
+#[ORM\Index(
+    name: 'course_section_instructor_cv',
+    columns: [
+        'instructor_id',
+        'cv_status'
+    ]
+)]
 class CourseSection implements \JsonSerializable, \Stringable
 {
-    /**
+    /**./bin
      * @param string $id
      * @param string $termCode
      * @param string $termName
