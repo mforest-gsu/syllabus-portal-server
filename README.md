@@ -7,7 +7,7 @@ API backend for Georgia State University's Syllabus Portal.
 1. Build package
 ```shell
 $ tar zcvf \
-    syllabus-portal-server.tar.gz \
+    var/syllabus-portal-server.tar.gz \
     bin \
     config \
     migrations \
