@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gsu\SyllabusPortal\Repository;
 
 use Gsu\SyllabusPortal\Entity\CourseSection;
+use Gsu\SyllabusPortal\Entity\CourseTemplate;
 use Gsu\SyllabusPortal\Entity\Term;
 use Gsu\SyllabusPortal\ThirdParty\Oracle\OracleGateway;
 use Gsu\SyllabusPortal\ThirdParty\Oracle\OracleQuery;
@@ -37,14 +38,13 @@ class BannerRepository
      */
     public function getCourseSections(string $termCode): iterable
     {
-        $crns = [];
+        $courseTemplates = [];
         $syllabusVerifications = $this->dbGateway->fetch(
             new OracleQuery(__DIR__ . '/SQL/GSU_SYLLABUS_VERIFICATION.sql'),
-            CourseSection::class,
-            [':termCode' => $termCode]
+            CourseTemplate::class
         );
         foreach ($syllabusVerifications as $syllabusVerification) {
-            $crns[$syllabusVerification->crn] = $syllabusVerification->crn;
+            $courseTemplates[$syllabusVerification->courseTemplate] = $syllabusVerification->courseTemplate;
         }
 
         $courseSections = $this->dbGateway->fetch(
@@ -54,11 +54,18 @@ class BannerRepository
         );
 
         foreach ($courseSections as $i => $courseSection) {
+            $courseTemplate = sprintf(
+                "090.%s.%s%s",
+                $courseSection->departmentCode,
+                $courseSection->subjectCode,
+                $courseSection->courseNumber
+            );
+
             $courseSection->syllabusIsRequired = (
-                (isset($crns[$courseSection->crn]) || $courseSection->collegeCode === "EH")
-                && !in_array($courseSection->subjectCode, ['CREG','GFA','INEX'], true)
-                && !in_array($courseSection->scheduleCode, ['E','F','H','M','N','O','P'], true)
-                && !in_array($courseSection->collegeCode, ['00','UN'], true)
+                (isset($courseTemplates[$courseTemplate]) || $courseSection->collegeCode === "EH")
+                // && !in_array($courseSection->subjectCode, ['CREG','GFA','INEX'], true)
+                // && !in_array($courseSection->scheduleCode, ['E','F','H','M','N','O','P'], true)
+                // && !in_array($courseSection->collegeCode, ['00','UN'], true)
             );
 
             yield $i => $courseSection;

@@ -133,6 +133,7 @@ class CourseSection implements \JsonSerializable, \Stringable
         #[ORM\Column(type: Types::BOOLEAN)]
         public bool $active = true
     ) {
+        // empty
     }
 
     public function init(): static
@@ -157,7 +158,7 @@ class CourseSection implements \JsonSerializable, \Stringable
 
     public function hasInstructor(): bool
     {
-        return !in_array($this->instructorPidm, ['','0','00000000'], true);
+        return !in_array($this->instructorPidm, ['', '0', '00000000'], true);
     }
 
     public function hasSyllabus(): bool
@@ -232,16 +233,18 @@ class CourseSection implements \JsonSerializable, \Stringable
      */
     public function getValues(bool $everything = false): array
     {
+        $filter = fn(string $k): bool => (
+            $k !== 'id'
+            && $k !== 'active'
+            && ($k === 'syllabusIsRequired' || !str_starts_with($k, 'syllabus'))
+            && !str_starts_with($k, 'cv')
+        );
+
         $values = $everything
             ? get_object_vars($this)
             : array_filter(
                 get_object_vars($this),
-                fn(string $k): bool => (
-                    $k !== 'id'
-                    && $k !== 'active'
-                    && ($k === 'syllabusIsRequired' || !str_starts_with($k, 'syllabus'))
-                    && !str_starts_with($k, 'cv')
-                ),
+                $filter,
                 ARRAY_FILTER_USE_KEY
             );
 
@@ -257,12 +260,15 @@ class CourseSection implements \JsonSerializable, \Stringable
      */
     public function getChecksum(bool $everything = false): string
     {
+        /** @var non-empty-string $str */
+        $str = json_encode(
+            $this->getValues($everything),
+            JSON_THROW_ON_ERROR
+        );
+
         return hash(
             'SHA1',
-            json_encode(
-                $this->getValues($everything),
-                JSON_THROW_ON_ERROR
-            )
+            $str
         );
     }
 
@@ -275,15 +281,19 @@ class CourseSection implements \JsonSerializable, \Stringable
 
     public function __toString(): string
     {
-        return json_encode($this, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+        /** @var non-empty-string $str */
+        $str = json_encode($this, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+        return $str;
     }
 
 
     public function hashCode(): string
     {
+        /** @var non-empty-string $str */
+        $str = json_encode([static::class, $this], JSON_THROW_ON_ERROR);
         return hash(
             'SHA256',
-            json_encode([static::class, $this], JSON_THROW_ON_ERROR)
+            $str
         );
     }
 }
