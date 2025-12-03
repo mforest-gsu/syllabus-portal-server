@@ -163,7 +163,7 @@ class CourseSection implements \JsonSerializable, \Stringable
 
     public function hasSyllabus(): bool
     {
-        return $this->hasInstructor() && $this->syllabusStatus === 'Complete' && $this->syllabusExtension !== null;
+        return $this->syllabusStatus === 'Complete' && $this->syllabusExtension !== null;
     }
 
     public function hasCv(): bool

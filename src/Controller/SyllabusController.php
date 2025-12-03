@@ -41,9 +41,6 @@ class SyllabusController extends AbstractController
         string $id
     ): JsonResponse {
         $courseSection = $this->courseSectionRepo->find($id) ?? throw new NotFoundHttpException();
-        if (!$courseSection->hasInstructor()) {
-            throw new NotFoundHttpException();
-        }
 
         $this->syllabusRepo->addSyllabus(
             $courseSection,
@@ -112,7 +109,7 @@ class SyllabusController extends AbstractController
         }
 
         $fileSize = filesize($syllabusFile->getPathname());
-        if ($fileSize < 1024 || $fileSize > 5000000) {
+        if ($fileSize < 1024 || $fileSize >= 2097152) {
             throw new BadRequestException();
         }
 
