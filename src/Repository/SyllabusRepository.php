@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gsu\SyllabusPortal\Repository;
 
 use Aws\S3\S3Client;
+use Doctrine\ORM\EntityManagerInterface;
 use Gsu\SyllabusPortal\Entity\CourseSection;
 use Gsu\SyllabusPortal\Entity\User;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -12,11 +13,13 @@ use Symfony\Component\Serializer\SerializerInterface;
 class SyllabusRepository
 {
     public function __construct(
+        private EntityManagerInterface $entityManager,
         private S3Client $s3Client,
         private SerializerInterface $serializer,
         private string $bucket,
         private string $prefix
     ) {
+        // empty
     }
 
 
@@ -48,60 +51,98 @@ class SyllabusRepository
             default => throw new \RuntimeException()
         };
 
-        $courseSection->syllabusStatus = "Complete";
-        $courseSection->syllabusKey = $this->getObjectKey($courseSection, $fileExt);
-        $courseSection->syllabusExtension = $fileExt;
-        $courseSection->syllabusUploadedBy = $user->getPreferredUsername();
-        $courseSection->syllabusUploadedOn = new \DateTime();
+        $syllabusKey = $this->getObjectKey($courseSection, $fileExt);
 
         try {
             $f = fopen($filePath, "r");
             if (!is_resource($f)) {
                 throw new \RuntimeException();
             }
-            $this->addObject(
-                $this->getObjectKey($courseSection, 'json'),
-                $this->serializer->serialize($courseSection, 'json')
-            );
-            $this->addObject(
-                $this->getObjectKey($courseSection),
-                $f
-            );
+
+            $this->s3Client->upload($this->bucket, $syllabusKey, $f);
         } finally {
             if (is_resource($f ?? null)) {
                 fclose($f);
             }
+
+            unset($f);
         }
-    }
 
-
-    public function addSyllabusMetadata(CourseSection $courseSection): void
-    {
-        $this->addObject(
-            $this->getObjectKey($courseSection, 'json'),
-            $this->serializer->serialize($courseSection, 'json')
+        $this->updateSyllabus(
+            $courseSection,
+            $syllabusKey,
+            $fileExt,
+            $user->getPreferredUsername(),
+            new \DateTime()
         );
     }
 
 
     public function removeSyllabus(CourseSection $courseSection): void
     {
+        // Remove file
         if ($courseSection->hasSyllabus()) {
-            $this->removeObject($this->getObjectKey($courseSection, 'json'));
-            $this->removeObject($this->getObjectKey($courseSection));
+            $this->s3Client->deleteObject([
+                'Bucket' => $this->bucket,
+                'Key' => $this->getObjectKey(
+                    $courseSection,
+                    $courseSection->syllabusExtension
+                )
+            ]);
         }
 
-        $courseSection->syllabusStatus = "Pending";
-        $courseSection->syllabusKey = null;
-        $courseSection->syllabusExtension = null;
-        $courseSection->syllabusUploadedBy = null;
-        $courseSection->syllabusUploadedOn = null;
+        $this->updateSyllabus($courseSection, null, null, null, null);
     }
 
 
-    public function removeSyllabusMetadata(CourseSection $courseSection): void
+    public function updateSyllabus(
+        CourseSection $courseSection,
+        string|null $key,
+        string|null $fileExt,
+        string|null $uploadedBy,
+        \DateTime|null $uploadedOn
+    ): void {
+        if (is_string($key)) {
+            $status = "Complete";
+            $fileExt = $fileExt ?? throw new \RuntimeException();
+            $uploadedBy = $uploadedBy ?? throw new \RuntimeException();
+            $uploadedOn = $uploadedOn ?? throw new \RuntimeException();
+        } else {
+            $status = "Pending";
+            $fileExt = null;
+            $uploadedBy = null;
+            $uploadedOn = null;
+        }
+
+        // Update record
+        $courseSection->syllabusStatus = $status;
+        $courseSection->syllabusKey = $key;
+        $courseSection->syllabusExtension = $fileExt;
+        $courseSection->syllabusUploadedBy = $uploadedBy;
+        $courseSection->syllabusUploadedOn = $uploadedOn;
+
+        $this->uploadMetadata($courseSection);
+
+        $this->entityManager->flush();
+    }
+
+
+    public function uploadMetadata(CourseSection $courseSection): void
     {
-        $this->removeObject($this->getObjectKey($courseSection, 'json'));
+        $this->s3Client->upload(
+            $this->bucket,
+            $this->getObjectKey($courseSection, 'json'),
+            $this->serializer->serialize($courseSection, 'json')
+        );
+    }
+
+
+    public function removeMetadata(CourseSection $courseSection): void
+    {
+        $this->s3Client->deleteObject([
+            'Bucket' => $this->bucket,
+            'Key' => $this->getObjectKey($courseSection, 'json')
+        ]);
     }
 
 
@@ -116,26 +157,5 @@ class SyllabusRepository
             $courseSection->crn,
             $syllabusExtension ?? $courseSection->syllabusExtension
         );
-    }
-
-
-    private function addObject(
-        string $key,
-        mixed $content
-    ): void {
-        $this->s3Client->upload(
-            $this->bucket,
-            $key,
-            $content
-        );
-    }
-
-
-    private function removeObject(string $key): void
-    {
-        $this->s3Client->deleteObject([
-            'Bucket' => $this->bucket,
-            'Key' => $key
-        ]);
     }
 }

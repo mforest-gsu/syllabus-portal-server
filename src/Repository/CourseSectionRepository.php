@@ -131,7 +131,8 @@ final class CourseSectionRepository extends ServiceEntityRepository
             /** @var CourseSection|null $currentSection */
             $currentSection = $this->find($newSection->id);
             if ($currentSection === null) {
-                $this->syllabusRepo->addSyllabusMetadata($newSection);
+                $this->cvRepo->updateWithCv($newSection);
+                $this->syllabusRepo->uploadMetadata($newSection);
                 $em->persist($newSection);
                 $created++;
                 if (++$saved % 250 === 0) {
@@ -140,7 +141,8 @@ final class CourseSectionRepository extends ServiceEntityRepository
             } else {
                 $currentSection->active = true;
                 if ($currentSection->setValues($newSection)) {
-                    $this->syllabusRepo->addSyllabusMetadata($currentSection);
+                    $this->cvRepo->updateWithCv($currentSection);
+                    $this->syllabusRepo->uploadMetadata($currentSection);
                     $updated++;
                     if (++$saved % 250 === 0) {
                         $em->flush();
@@ -153,8 +155,6 @@ final class CourseSectionRepository extends ServiceEntityRepository
 
         $em->flush();
 
-        $this->updateCV();
-
         $deleted = $this->removeInactive($termCode);
 
         return [
@@ -165,77 +165,6 @@ final class CourseSectionRepository extends ServiceEntityRepository
         ];
     }
 
-
-    public function updateCV(): void
-    {
-        $courseSectionClass = CourseSection::class;
-        $dql = "
-            SELECT
-                a
-            FROM
-                {$courseSectionClass} a
-            WHERE
-                a.id in (
-                    SELECT
-                        max(b.id) as id
-                    FROM
-                        {$courseSectionClass} b
-                    WHERE
-                        b.instructorId = a.instructorId AND
-                        b.cvStatus = 'Complete'
-                    GROUP BY
-                        b.instructorId
-                )
-                and exists(
-                    SELECT
-                        1
-                    FROM
-                        {$courseSectionClass} c
-                    WHERE
-                        c.instructorId = a.instructorId AND
-                        c.cvStatus != 'Complete'
-                )
-        ";
-
-        /** @var CourseSection[] $data */
-        $data = $this->getEntityManager()
-            ->createQuery($dql)
-            ->getResult();
-
-        foreach ($data as $row) {
-            $this->setCv($row);
-        }
-    }
-
-
-    public function setCv(CourseSection $courseSection): int
-    {
-        $courseSectionClass = CourseSection::class;
-        $updated = $this
-            ->getEntityManager()
-            ->createQuery("
-                UPDATE
-                    {$courseSectionClass} CourseSection
-                SET
-                    CourseSection.cvStatus = :cvStatus,
-                    CourseSection.cvKey = :cvKey,
-                    CourseSection.cvExtension = :cvExtension,
-                    CourseSection.cvUploadedBy = :cvUploadedBy,
-                    CourseSection.cvUploadedOn = :cvUploadedOn
-                WHERE
-                    CourseSection.instructorId = :instructorId
-            ")
-            ->execute([
-                ':instructorId' => $courseSection->instructorId,
-                ':cvStatus' => $courseSection->cvStatus,
-                ':cvKey' => $courseSection->cvKey,
-                ':cvExtension' => $courseSection->cvExtension,
-                ':cvUploadedBy' => $courseSection->cvUploadedBy,
-                ':cvUploadedOn' => $courseSection->cvUploadedOn
-            ]);
-
-        return is_numeric($updated) ? intval($updated) : 0;
-    }
 
 
     public function setAllInactive(): int
@@ -305,11 +234,11 @@ final class CourseSectionRepository extends ServiceEntityRepository
 
         $deletedTotal = $deleted = 0;
         foreach ($data as $courseSection) {
-            if ($courseSection->hasSyllabus()) {
+            if ($courseSection->hasSyllabus() || $courseSection->hasCv()) {
                 //$this->syllabusRepo->removeSyllabus($courseSection);
-                $this->syllabusRepo->addSyllabusMetadata($courseSection);
+                $this->syllabusRepo->uploadMetadata($courseSection);
             } else {
-                $this->syllabusRepo->removeSyllabusMetadata($courseSection);
+                $this->syllabusRepo->removeMetadata($courseSection);
                 $this->getEntityManager()->remove($courseSection);
                 $deleted++;
             }

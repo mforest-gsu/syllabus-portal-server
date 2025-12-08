@@ -41,22 +41,18 @@ class UpdateCourseSectionsCommand extends Command implements LoggerAwareInterfac
     ): int {
         $this->courseSectionRepo->setAllInactive();
 
-        // Run for each available term
         foreach ($this->getAvailableTerms($input) as $termCode) {
-            // Fetch new course sections from Banner
-            $newSections = $this->bannerRepo->getCourseSections($termCode);
-            $this->logger?->info(sprintf(
-                "Fetched course sections for term '%s'",
-                $termCode
-            ));
+            $this->logger?->info(sprintf("Term: %s", $termCode));
 
-            // Update local course sections
             $result = $this->courseSectionRepo->update(
                 $termCode,
-                $newSections
+                $this->bannerRepo->getCourseSections($termCode)
             );
+
+            $result['deleted'] = $this->courseSectionRepo->removeInactive($termCode);
+
             $this->logger?->info(sprintf(
-                "Updated course sections for term '%s'; +%s, ~%s, -%s; %s",
+                "Term '%s'; Created: %s; Updated: %s, Deleted: %s; Total: %s",
                 $termCode,
                 $result['created'],
                 $result['updated'],

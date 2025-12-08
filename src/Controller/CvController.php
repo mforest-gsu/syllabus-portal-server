@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Gsu\SyllabusPortal\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Gsu\SyllabusPortal\Entity\User;
 use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
 use Gsu\SyllabusPortal\Repository\CvRepository;
@@ -21,11 +20,11 @@ use Symfony\Component\Serializer\SerializerInterface;
 class CvController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
         private CourseSectionRepository $courseSectionRepo,
         private CvRepository $cvRepo,
         private SerializerInterface $serializer
     ) {
+        // empty
     }
 
 
@@ -50,10 +49,6 @@ class CvController extends AbstractController
             $this->getCvFile($request)->getPathname()
         );
 
-        $this->courseSectionRepo->setCv($courseSection);
-
-        $this->entityManager->flush();
-
         return $this->createResponse($id);
     }
 
@@ -72,10 +67,6 @@ class CvController extends AbstractController
         }
 
         $this->cvRepo->removeCv($courseSection);
-
-        $this->courseSectionRepo->setCv($courseSection);
-
-        $this->entityManager->flush();
 
         return $this->createResponse($id);
     }

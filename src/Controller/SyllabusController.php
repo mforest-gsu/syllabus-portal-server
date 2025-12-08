@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Gsu\SyllabusPortal\Controller;
 
-use Aws\S3\S3Client;
-use Doctrine\ORM\EntityManagerInterface;
 use Gsu\SyllabusPortal\Entity\User;
 use Gsu\SyllabusPortal\Repository\CourseSectionRepository;
 use Gsu\SyllabusPortal\Repository\SyllabusRepository;
@@ -22,11 +20,11 @@ use Symfony\Component\Serializer\SerializerInterface;
 class SyllabusController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
         private CourseSectionRepository $courseSectionRepo,
         private SyllabusRepository $syllabusRepo,
         private SerializerInterface $serializer
     ) {
+        // empty
     }
 
 
@@ -48,8 +46,6 @@ class SyllabusController extends AbstractController
             $this->getSyllabusFile($request)->getPathname()
         );
 
-        $this->entityManager->flush();
-
         return $this->createResponse($id);
     }
 
@@ -68,8 +64,6 @@ class SyllabusController extends AbstractController
         }
 
         $this->syllabusRepo->removeSyllabus($courseSection);
-
-        $this->entityManager->flush();
 
         return $this->createResponse($id);
     }
