@@ -54,12 +54,7 @@ class BannerRepository
         );
 
         foreach ($courseSections as $i => $courseSection) {
-            $courseTemplate = sprintf(
-                "090.%s.%s%s",
-                $courseSection->departmentCode,
-                $courseSection->subjectCode,
-                $courseSection->courseNumber
-            );
+            $courseTemplate = $courseSection->subjectCode . $courseSection->courseNumber;
 
             $courseSection->syllabusIsRequired = (
                 (isset($courseTemplates[$courseTemplate]) || $courseSection->collegeCode === "EH")
