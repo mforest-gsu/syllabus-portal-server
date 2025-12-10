@@ -41,8 +41,12 @@ class CvRepository
     }
 
 
-    public function getCv(string $instructorPidm): CourseSection|null
+    public function getCv(string $instructorId): CourseSection|null
     {
+        if (in_array($instructorId, ['', 'STAFF'], true)) {
+            return null;
+        }
+
         $courseSectionClass = CourseSection::class;
         $dql = "
             SELECT
@@ -50,11 +54,11 @@ class CvRepository
             FROM
                 {$courseSectionClass} CourseSection
             WHERE
-                CourseSection.instructorPidm = :instructorPidm AND
+                CourseSection.instructorId = :instructorId AND
                 CourseSection.cvStatus = 'Complete'
         ";
         $params = [
-            ':instructorPidm' => $instructorPidm
+            ':instructorId' => $instructorId
         ];
 
         /** @var CourseSection[] $data */
@@ -67,7 +71,35 @@ class CvRepository
             return $cv;
         }
 
-        return null;
+        $result = $this->s3Client->listObjectsV2([
+            'Bucket' => $this->bucket,
+            'Prefix' => sprintf(
+                "%s/cv/%s.pdf",
+                $this->prefix,
+                $instructorId
+            ),
+            'MaxKeys' => 1
+        ]);
+
+        /**
+         * @var array{Key:string,Size:string,LastModified:\Stringable}[] $objects
+         */
+        $objects = $result['Contents'] ?? [];
+        $object = array_shift($objects);
+        if ($object === null) {
+            return null;
+        }
+
+        $cv = new CourseSection();
+        $cv->instructorId = $instructorId;
+        $cv->cvStatus = 'Complete';
+        $cv->cvKey = $object['Key'];
+        $cv->cvExtension = 'pdf';
+        $cvUploadedOn = \DateTime::createFromFormat('Y-m-d\\TH:i:sP', $object['LastModified']->__toString());
+        $cv->cvUploadedOn = $cvUploadedOn instanceof \DateTime ? $cvUploadedOn : null;
+        $cv->cvUploadedBy = 'system';
+
+        return $cv;
     }
 
 
@@ -190,7 +222,7 @@ class CvRepository
 
     public function updateWithCv(CourseSection $currentSection): CourseSection
     {
-        $cv = $currentSection->hasInstructor() ? $this->getCv($currentSection->instructorPidm) : null;
+        $cv = $currentSection->hasInstructor() ? $this->getCv($currentSection->instructorId) : null;
         if ($cv !== null) {
             $currentSection->cvStatus = $cv->cvStatus;
             $currentSection->cvKey = $cv->cvKey;
